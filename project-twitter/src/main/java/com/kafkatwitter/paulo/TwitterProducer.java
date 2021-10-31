@@ -124,6 +124,11 @@ public class TwitterProducer {
         properties.setProperty(RETRIES_CONFIG, Integer.toString(Integer.MAX_VALUE));
         properties.setProperty(MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, "5");
 
+//        High throughput producer
+        properties.setProperty(COMPRESSION_TYPE_CONFIG, "snappy");
+        properties.setProperty(LINGER_MS_CONFIG, "20");
+        properties.setProperty(BATCH_SIZE_CONFIG, Integer.toString(32 * 1024));
+
 
 //        Create producer
         return new KafkaProducer<String, String>(properties);
