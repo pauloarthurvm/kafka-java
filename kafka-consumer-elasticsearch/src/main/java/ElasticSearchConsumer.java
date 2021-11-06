@@ -14,13 +14,22 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 public class ElasticSearchConsumer {
 
+    public static Properties prop;
 
     public static void main(String[] args) throws IOException {
         Logger logger = LoggerFactory.getLogger(ElasticSearchConsumer.class.getName());
+
+        InputStream input = new FileInputStream("src/main/resources/fields.properties");
+        prop = new Properties();
+        prop.load(input);
+
         RestHighLevelClient client = createClient();
 
         String jsonString = "{ \"foo\": \"bar\" }";
@@ -40,9 +49,9 @@ public class ElasticSearchConsumer {
     public static RestHighLevelClient createClient() {
 
         // From bonsai
-        String hostname = "";
-        String username = "";
-        String password = "";
+        String hostname = prop.getProperty("es.hostname");
+        String username = prop.getProperty("es.username");
+        String password = prop.getProperty("es.password");
 
         final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password));
