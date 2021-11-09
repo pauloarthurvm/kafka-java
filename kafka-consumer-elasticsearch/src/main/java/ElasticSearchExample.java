@@ -19,12 +19,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class ElasticSearchConsumer {
+public class ElasticSearchExample {
 
     public static Properties prop;
 
     public static void main(String[] args) throws IOException {
-        Logger logger = LoggerFactory.getLogger(ElasticSearchConsumer.class.getName());
+        Logger logger = LoggerFactory.getLogger(ElasticSearchExample.class.getName());
 
         InputStream input = new FileInputStream("src/main/resources/fields.properties");
         prop = new Properties();
