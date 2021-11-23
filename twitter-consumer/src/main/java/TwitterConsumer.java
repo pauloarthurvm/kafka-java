@@ -1,3 +1,4 @@
+import com.google.gson.JsonParser;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -44,11 +45,19 @@ public class TwitterConsumer {
         while(true) {
             ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
             for(ConsumerRecord record : records) {
-                IndexRequest indexRequest = new IndexRequest("twitter", "tweets")
-                        .source(record.value(), XContentType.JSON);
+                // TWO Ways to create ID
+                // 1. Generate for topic message info
+                // String id = record.topic() + "_" + record.partition() + "_" + record.offset();
+                // 2. Copy from Twitter info
+                String id = extractIdFromTweet(record.value().toString());
+
+                IndexRequest indexRequest = new IndexRequest(
+                        "twitter",
+                        "tweets",
+                        id // ID to do not add duplicate data to Elastic Search
+                    ).source(record.value(), XContentType.JSON);
                 IndexResponse indexResponse = client.index(indexRequest, RequestOptions.DEFAULT);
-                String id = indexResponse.getId();
-                logger.info("Worked: " + id);
+                logger.info("Worked: " + indexResponse.getId());
             }
             try {   // Delay if there is too many tweets
                 Thread.sleep(1000);
@@ -59,6 +68,12 @@ public class TwitterConsumer {
 
         // Close the client gracefully
 //        client.close();
+    }
+
+    private static JsonParser jsonParser = new JsonParser();
+
+    private static String extractIdFromTweet(String tweetJson) {
+        return jsonParser.parse(tweetJson).getAsJsonObject().get("id_str").getAsString();
     }
 
     public static KafkaConsumer<String, String> createConsumer(String topic) {
