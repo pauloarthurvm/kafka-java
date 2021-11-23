@@ -35,7 +35,7 @@ public class TwitterProducer {
 
     String bootstrapServers = "127.0.0.1:9092";
 
-    List<String> terms = Lists.newArrayList("compiegneresearch");
+    List<String> terms = Lists.newArrayList("compiegne");
 
     Logger logger = LoggerFactory.getLogger(TwitterProducer.class.getName());
 
