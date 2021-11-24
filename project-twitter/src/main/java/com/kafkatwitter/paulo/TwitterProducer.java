@@ -28,14 +28,14 @@ import static org.apache.kafka.clients.producer.ProducerConfig.*;
 
 public class TwitterProducer {
 
-    String consumerKey = "";
-    String consumerSecret = "";
-    String token = "";
-    String secret = "";
+    String consumerKey = "5OP7mDzmd9kzaKOmvxwLY5dO4";
+    String consumerSecret = "IZvavBbOvBcnt99OqnUDoePnKZuRY6WR0AQagYuI9pjCgAWHCW";
+    String token = "1454795516269588492-p6UdOyAkkg3wJO81l1M4ZFZFdwHivu";
+    String secret = "Iq475SLl8PCtgydOr0wRMIgvRcfKCrNONH2OsCfiOxJsz";
 
     String bootstrapServers = "127.0.0.1:9092";
 
-    List<String> terms = Lists.newArrayList("compiegne");
+    List<String> terms = Lists.newArrayList("bitcoin");
 
     Logger logger = LoggerFactory.getLogger(TwitterProducer.class.getName());
 

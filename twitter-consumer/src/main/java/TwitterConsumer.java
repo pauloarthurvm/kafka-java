@@ -44,6 +44,8 @@ public class TwitterConsumer {
 //        Poll for new data
         while(true) {
             ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
+
+            logger.info("Received " + records.count() + " records");
             for(ConsumerRecord record : records) {
                 // TWO Ways to create ID
                 // 1. Generate for topic message info
@@ -55,11 +57,19 @@ public class TwitterConsumer {
                         "twitter",
                         "tweets",
                         id // ID to do not add duplicate data to Elastic Search
-                    ).source(record.value(), XContentType.JSON);
+                    ).source(record.value().toString(), XContentType.JSON);
                 IndexResponse indexResponse = client.index(indexRequest, RequestOptions.DEFAULT);
                 logger.info("Worked: " + indexResponse.getId());
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
-            try {   // Delay if there is too many tweets
+            logger.info("Commiting offsets...");
+            consumer.commitSync();
+            logger.info("Offsets commited");
+            try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -87,6 +97,8 @@ public class TwitterConsumer {
         properties.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         properties.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         properties.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); // earliest or latest are very used
+        properties.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false"); // disable autocommit of offsets
+        properties.setProperty(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "5");
 
 //        Create Consumer
         KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(properties);
