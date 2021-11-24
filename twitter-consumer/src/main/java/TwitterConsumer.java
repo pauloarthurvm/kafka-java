@@ -10,6 +10,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -44,35 +46,46 @@ public class TwitterConsumer {
 //        Poll for new data
         while(true) {
             ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
+            Integer recordsCount = records.count();
+            logger.info("Received " + recordsCount + " records");
 
-            logger.info("Received " + records.count() + " records");
+            BulkRequest bulkRequest = new BulkRequest();
+
             for(ConsumerRecord record : records) {
                 // TWO Ways to create ID
                 // 1. Generate for topic message info
                 // String id = record.topic() + "_" + record.partition() + "_" + record.offset();
                 // 2. Copy from Twitter info
-                String id = extractIdFromTweet(record.value().toString());
-
-                IndexRequest indexRequest = new IndexRequest(
-                        "twitter",
-                        "tweets",
-                        id // ID to do not add duplicate data to Elastic Search
-                    ).source(record.value().toString(), XContentType.JSON);
-                IndexResponse indexResponse = client.index(indexRequest, RequestOptions.DEFAULT);
-                logger.info("Worked: " + indexResponse.getId());
                 try {
-                    Thread.sleep(10);
+                    String id = extractIdFromTweet(record.value().toString());
+
+                    IndexRequest indexRequest = new IndexRequest(
+                            "twitter",
+                            "tweets",
+                            id // ID to do not add duplicate data to Elastic Search
+                    ).source(record.value().toString(), XContentType.JSON);
+                    bulkRequest.add(indexRequest);  // Use bulk request to send more data together - substitute below IndexResponse
+//                IndexResponse indexResponse = client.index(indexRequest, RequestOptions.DEFAULT);
+//                logger.info("Worked: " + indexResponse.getId());
+//                try {
+//                    Thread.sleep(10);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+                } catch (NullPointerException e) {
+                    logger.warn("Skipping bad data: " + record.value().toString());
+                }
+            }
+            if (recordsCount > 0) {
+                BulkResponse bulkItemResponses = client.bulk(bulkRequest, RequestOptions.DEFAULT);
+                logger.info("Commiting offsets...");
+                consumer.commitSync();
+                logger.info("Offsets commited");
+                try {
+                    Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-            }
-            logger.info("Commiting offsets...");
-            consumer.commitSync();
-            logger.info("Offsets commited");
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
         }
 
